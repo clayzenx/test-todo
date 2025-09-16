@@ -6,8 +6,10 @@ const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } },
+  context: { params: Promise<{ id: string }> },
 ) {
+  const id = (await context.params).id;
+
   const authHeader = req.headers.get("authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -29,7 +31,7 @@ export async function PUT(
   const { description, completed } = await req.json();
 
   const task = await prisma.task.update({
-    where: { id: Number(params.id) },
+    where: { id: Number(id) },
     data: { description, completed },
   });
 

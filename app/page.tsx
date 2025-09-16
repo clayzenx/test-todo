@@ -24,9 +24,17 @@ export default async function Home({
 
   const pageSize = 3;
 
-  const tasks: Task[] = await prisma.$queryRawUnsafe(
-    `SELECT * FROM "Task" ORDER BY LOWER("${sort}") ${order} LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
-  );
+  let tasks: Task[];
+
+  if (sort === "username" || sort == "description") {
+    tasks = await prisma.$queryRawUnsafe<Task[]>(
+      `SELECT * FROM "Task" ORDER BY LOWER("${sort}") ${order} LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
+    );
+  } else {
+    tasks = await prisma.$queryRawUnsafe<Task[]>(
+      `SELECT * FROM "Task" ORDER BY "${sort}" ${order} LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
+    );
+  }
 
   const totalTasks = await prisma.task.count();
   const totalPages = Math.ceil(totalTasks / pageSize);
