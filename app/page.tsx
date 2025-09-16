@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Task } from "./generated/prisma";
+import TaskForm from "./components/TaskForm";
 
 type SearchParams = {
   page?: string;
@@ -33,6 +34,8 @@ export default async function Home({
   return (
     <div className="p-8 max-w-3xl mx-auto text-gray-800">
       <h1 className="text-3xl font-bold mb-8">📋 Задачи</h1>
+
+      <TaskForm />
 
       {/* Сортировка */}
       <div className="mb-8 flex gap-2">
