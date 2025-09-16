@@ -8,9 +8,12 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } },
 ) {
-  const token = req.cookies.get("token")?.value;
-  if (!token)
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const token = authHeader.split(" ")[1];
 
   let payload: any;
   try {

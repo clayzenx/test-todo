@@ -27,7 +27,6 @@ export default function LoginModal() {
 
       if (!res.ok) throw new Error(data.error || "Ошибка входа");
 
-      // обновляем контекст
       setToken(data.token);
 
       setOpen(false);

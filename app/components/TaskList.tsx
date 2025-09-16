@@ -13,11 +13,19 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
   const { isAdmin } = useContext(AdminContext);
 
   async function saveTask(id: number) {
+    const token = localStorage.getItem("token"); // берем токен из localStorage
+
+    if (!token) return alert("Unauthorized");
+
     await fetch(`/api/tasks/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // отправляем токен в заголовке
+      },
       body: JSON.stringify(values),
     });
+
     setEditing(null);
     router.refresh();
   }
