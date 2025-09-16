@@ -1,12 +1,12 @@
 "use client";
-import { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useState, FormEvent, useContext } from "react";
+import { AdminContext } from "../context/AdminContext";
 
 export default function LoginModal() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const { setToken } = useContext(AdminContext);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -27,10 +27,10 @@ export default function LoginModal() {
 
       if (!res.ok) throw new Error(data.error || "Ошибка входа");
 
-      localStorage.setItem("token", data.token);
+      // обновляем контекст
+      setToken(data.token);
 
       setOpen(false);
-      router.refresh();
     } catch (err) {
       setError((err as Error).message);
     } finally {

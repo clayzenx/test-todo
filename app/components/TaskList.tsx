@@ -1,27 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useContext } from "react";
 import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
+import { AdminContext } from "../context/AdminContext";
 import { Task } from "../generated/prisma";
-
-type Token = { role: string };
 
 export default function TaskList({ tasks }: { tasks: Task[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<number | null>(null);
   const [values, setValues] = useState({ description: "", completed: false });
-  const [isAdmin, setIsAdmin] = useState(false);
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode<Token>(token);
-        setIsAdmin(decoded.role === "admin");
-      } catch {}
-    }
-  }, []);
+  const { isAdmin } = useContext(AdminContext);
 
   async function saveTask(id: number) {
     await fetch(`/api/tasks/${id}`, {
@@ -38,7 +27,9 @@ export default function TaskList({ tasks }: { tasks: Task[] }) {
       {tasks.map((task) => (
         <div
           key={task.id}
-          className={`p-4 border rounded-lg ${task.completed ? "bg-green-50" : "bg-white"}`}
+          className={`p-4 border rounded-lg ${
+            task.completed ? "bg-green-50" : "bg-white"
+          }`}
         >
           {editing === task.id ? (
             <div className="flex flex-col gap-2">
