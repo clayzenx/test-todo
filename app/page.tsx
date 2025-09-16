@@ -1,103 +1,119 @@
-import Image from "next/image";
+import prisma from "@/lib/prisma";
+import Link from "next/link";
+import { Task } from "./generated/prisma";
 
-export default function Home() {
+type SearchParams = {
+  page?: string;
+  sort?: keyof Task;
+  order?: "asc" | "desc";
+};
+
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+
+  const page = parseInt(params.page || "1", 10);
+  const sort: keyof Task = params.sort || "username";
+  const order: "asc" | "desc" = params.order === "desc" ? "desc" : "asc";
+
+  const pageSize = 3;
+
+  const tasks: Task[] = await prisma.task.findMany({
+    orderBy: { [sort]: order },
+    skip: (page - 1) * pageSize,
+    take: pageSize,
+  });
+
+  const total = await prisma.task.count();
+  const totalPages = Math.ceil(total / pageSize);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="p-8 max-w-3xl mx-auto text-gray-800">
+      <h1 className="text-3xl font-bold mb-8">📋 Задачи</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      {/* Сортировка */}
+      <div className="mb-8 flex gap-2">
+        {(["username", "email", "completed"] as (keyof Task)[]).map((field) => (
+          <Link
+            key={field}
+            href={`/?page=1&sort=${field}&order=${order === "asc" ? "desc" : "asc"}`}
+            className={`px-4 py-2 rounded-lg border text-sm transition ${
+              sort === field
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white hover:bg-gray-100 border-gray-300"
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {field}
+            {sort === field && (order === "asc" ? " ↑" : " ↓")}
+          </Link>
+        ))}
+      </div>
+
+      {/* Список задач */}
+      <ul className="mb-8 space-y-4">
+        {tasks.map((task) => (
+          <li
+            key={task.id}
+            className="p-6 bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md transition"
           >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <div className="flex justify-between items-center mb-2">
+              <span className="font-semibold text-lg">{task.username}</span>
+              <span
+                className={`px-3 py-1 text-xs font-medium rounded-full ${
+                  task.completed
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {task.completed ? "Выполнена" : "Не выполнена"}
+              </span>
+            </div>
+            <p className="text-sm text-gray-500 mb-2">{task.email}</p>
+            <p className="text-gray-700">{task.description}</p>
+          </li>
+        ))}
+      </ul>
+
+      {/* Пагинация */}
+      <div className="flex justify-center items-center gap-2">
+        {/* Назад */}
+        {page > 1 && (
+          <Link
+            href={`/?page=${page - 1}&sort=${sort}&order=${order}`}
+            className="px-3 py-1 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
+          >
+            ← Назад
+          </Link>
+        )}
+
+        {/* Номера страниц */}
+        {Array.from({ length: totalPages }).map((_, i) => (
+          <Link
+            key={i}
+            href={`/?page=${i + 1}&sort=${sort}&order=${order}`}
+            className={`px-3 py-1 border rounded-lg text-sm ${
+              page === i + 1
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white hover:bg-gray-100 border-gray-300"
+            }`}
+          >
+            {i + 1}
+          </Link>
+        ))}
+
+        {/* Вперёд */}
+        {page < totalPages && (
+          <Link
+            href={`/?page=${page + 1}&sort=${sort}&order=${order}`}
+            className="px-3 py-1 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
+          >
+            Вперёд →
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
