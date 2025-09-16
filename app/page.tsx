@@ -1,6 +1,8 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
 import { Task } from "./generated/prisma";
+import LoginModal from "./components/LoginModal";
+import TaskList from "./components/TaskList";
 import TaskForm from "./components/TaskForm";
 
 type SearchParams = {
@@ -28,71 +30,54 @@ export default async function Home({
     take: pageSize,
   });
 
-  const total = await prisma.task.count();
-  const totalPages = Math.ceil(total / pageSize);
+  const totalTasks = await prisma.task.count();
+  const totalPages = Math.ceil(totalTasks / pageSize);
 
   return (
-    <div className="p-8 max-w-3xl mx-auto text-gray-800">
-      <h1 className="text-3xl font-bold mb-8">📋 Задачи</h1>
+    <main className="max-w-3xl mx-auto p-8 space-y-6 text-gray-800">
+      <header className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">📋 Задачи</h1>
+        <LoginModal />
+      </header>
 
       <TaskForm />
 
       {/* Сортировка */}
-      <div className="mb-8 flex gap-2">
+      <div className="flex gap-2">
         {(["username", "email", "completed"] as (keyof Task)[]).map((field) => (
           <Link
             key={field}
             href={`/?page=1&sort=${field}&order=${order === "asc" ? "desc" : "asc"}`}
-            className={`px-4 py-2 rounded-lg border text-sm transition ${
+            className={`px-4 py-2 text-sm rounded-lg border transition ${
               sort === field
                 ? "bg-blue-600 text-white border-blue-600"
                 : "bg-white hover:bg-gray-100 border-gray-300"
             }`}
           >
-            {field}
+            {field === "username"
+              ? "Имя"
+              : field === "email"
+                ? "Email"
+                : "Статус"}
             {sort === field && (order === "asc" ? " ↑" : " ↓")}
           </Link>
         ))}
       </div>
 
       {/* Список задач */}
-      <ul className="mb-8 space-y-4">
-        {tasks.map((task) => (
-          <li
-            key={task.id}
-            className="p-6 bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md transition"
-          >
-            <div className="flex justify-between items-center mb-2">
-              <span className="font-semibold text-lg">{task.username}</span>
-              <span
-                className={`px-3 py-1 text-xs font-medium rounded-full ${
-                  task.completed
-                    ? "bg-green-100 text-green-700"
-                    : "bg-red-100 text-red-700"
-                }`}
-              >
-                {task.completed ? "Выполнена" : "Не выполнена"}
-              </span>
-            </div>
-            <p className="text-sm text-gray-500 mb-2">{task.email}</p>
-            <p className="text-gray-700">{task.description}</p>
-          </li>
-        ))}
-      </ul>
+      <TaskList tasks={tasks} />
 
       {/* Пагинация */}
-      <div className="flex justify-center items-center gap-2">
-        {/* Назад */}
+      <div className="flex justify-center gap-2 mt-6">
         {page > 1 && (
           <Link
             href={`/?page=${page - 1}&sort=${sort}&order=${order}`}
-            className="px-3 py-1 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
+            className="px-3 py-1 border rounded-lg hover:bg-gray-100"
           >
             ← Назад
           </Link>
         )}
 
-        {/* Номера страниц */}
         {Array.from({ length: totalPages }).map((_, i) => (
           <Link
             key={i}
@@ -107,16 +92,15 @@ export default async function Home({
           </Link>
         ))}
 
-        {/* Вперёд */}
         {page < totalPages && (
           <Link
             href={`/?page=${page + 1}&sort=${sort}&order=${order}`}
-            className="px-3 py-1 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100"
+            className="px-3 py-1 border rounded-lg hover:bg-gray-100"
           >
             Вперёд →
           </Link>
         )}
       </div>
-    </div>
+    </main>
   );
 }
