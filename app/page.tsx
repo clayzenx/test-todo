@@ -24,11 +24,9 @@ export default async function Home({
 
   const pageSize = 3;
 
-  const tasks: Task[] = await prisma.task.findMany({
-    orderBy: { [sort]: order },
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-  });
+  const tasks: Task[] = await prisma.$queryRawUnsafe(
+    `SELECT * FROM "Task" ORDER BY LOWER("${sort}") ${order} LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`,
+  );
 
   const totalTasks = await prisma.task.count();
   const totalPages = Math.ceil(totalTasks / pageSize);
