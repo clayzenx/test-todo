@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma } from "../app/generated/prisma";
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
@@ -45,6 +46,23 @@ export async function main() {
   for (const u of userData) {
     await prisma.task.create({ data: u });
   }
+
+  const username = "admin";
+  const password = "123";
+
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  await prisma.user.upsert({
+    where: { username },
+    update: {},
+    create: {
+      username,
+      passwordHash,
+      role: "admin",
+    },
+  });
+
+  console.log(`Admin user created: login=${username} / password=${password}`);
 }
 
 main();

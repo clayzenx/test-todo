@@ -8,7 +8,8 @@
     "start": "next start"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed.ts",
+    "admin": "tsx prisma/admin.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.16.1",
